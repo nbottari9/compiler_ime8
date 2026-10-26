@@ -17,20 +17,49 @@ struct decl {
 	struct decl *next;
 };
 */
-void decl_translate(struct decl *d, char* cpp_translations) {
-    // *decl is a linked list
-    // while loop
-    while (d->next) {
-        type_translate(d->type, d->name, cpp_translations); // get the type and the id
-        if (d->value) {
-            expr_translate(d->value, cpp_translations);
+
+void decl_translate(struct decl *d, char *cpp_translations) {
+    if (d == NULL || cpp_translations == NULL)
+        return;
+
+    while (d != NULL) {
+        char temp[4096] = "";
+
+        type_translate(d->type, d->name, temp);
+        strcat(cpp_translations, temp);
+
+        if (d->type != NULL && d->type->kind == TYPE_FUNCTION) {
+            strcat(cpp_translations, "(");
+
+            if (d->type->params != NULL) {
+                temp[0] = '\0';
+                param_list_translate(d->type->params, temp);
+                strcat(cpp_translations, temp);
+            }
+
+            strcat(cpp_translations, ")");
+
+            if (d->code != NULL) {
+                temp[0] = '\0';
+                stmt_translate(d->code, temp);
+                strcat(cpp_translations, temp);
+            } else {
+                strcat(cpp_translations, ";");
+            }
+        } else {
+            if (d->value != NULL) {
+                strcat(cpp_translations, " = ");
+                temp[0] = '\0';
+                expr_translate(d->value, temp);
+                strcat(cpp_translations, temp);
+            }
+
+            strcat(cpp_translations, ";");
         }
 
-        if (d->type->kind == TYPE_FUNCTION) {
-            
-        }
-        // then type, goes before identifier in cpp
-        // then identifier name
-        // then initial value
+        if (d->next != NULL)
+            strcat(cpp_translations, "\n");
+
+        d = d->next;
     }
 }
